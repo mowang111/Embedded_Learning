@@ -10,14 +10,18 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/compat.h>
+#include "led_opr.h"
+
+#define LED_NUM 2
 
 static int major;
 static struct class *led_class;
+static struct led_opration* p_ledopr;
 
 /* register */
 /* IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3 0x2290014 */
 static volatile unsigned int *IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3;
-x020AC000 + 0x4 */
+/* GPIO5_GDIR 0x020AC000 + 0x4 */
 static volatile unsigned int *GPIO5_GDIR;
 /* GPIO5_DR 0x020AC000 + 0 */
 static volatile unsigned int *GPIO5_DR;
@@ -30,37 +34,35 @@ struct file_operations led_fops = {
 
 static int led_open(struct inode *inode, struct file *file)
 {
-    /* enable gpio: ccm clock 
-     * configure pin as gpio: iomux
-     * configure gpio as output: input/output
-     */
-    *IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3 &= ~0xf;
-    *IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3 |= 0x05;
-    *GPIO5_GDIR |= 1 << 3;
+    int minor = iminor(inode);
 
+    printk("%s %s %s\n", __FILE__, __FUNCTION__, __LINE__);
+
+    p_ledopr->init(minor);
     return 0;
 }
 
 static size_t led_write(struct file *file, const char __user *buf,
 			  size_t len, loff_t *ppos) 
 {
-    int val;
+    char status;
+    struct inode *inode = file_inode(file);
+    int minor = iminor(inode);
+
+    printk("%s %s %s\n", __FILE__, __FUNCTION__, __LINE__);
+    
     /* copy from user */
-    copy_from_user(&val, buf, 1);
-    /* set gpio register: 1/0 */
-    if (val)
-    {
-        /* let led on */
-        *GPIO5_DR &= ~(1 << 3);
-    }
-    else
-    {
-        /* let led off */
-        *GPIO5_DR |= 1 << 3;
-    }
+    copy_from_user(&status, buf, 1);
+
+    p_ledopr->ctl(minor, status);
+
+    return 0;
 }
+
 static int __init led_init(void)
 {
+    int i;
+
     printk("%s %s %s\n", __FILE__, __FUNCTION__, __LINE__);
     major = register_chrdev(0, "led_drv", &led_fops);
     if (major < 0)
@@ -69,8 +71,13 @@ static int __init led_init(void)
         return major;
     }
 
-    led_class = class_create(THIS_MODULE, "myled"); 
-    device_create(led_class, NULL, MKDEV(major, 0), NULL, "myled"); /*/dev/myled*/
+    led_class = class_create(THIS_MODULE, "myled");
+    for(i = 0; i < LED_NUM; i++)
+    {
+        device_create(led_class, NULL, MKDEV(major, i), NULL, "myled%d", i); /*/dev/myled0*/
+    }
+
+    p_ledopr = get_board_led_opr();
 
     /*ioremap*/
     IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3 = ioremap(0x2290014, 4);
@@ -82,7 +89,11 @@ static int __init led_init(void)
 
 static int __exit led_exit(void)
 {
-    device_destroy(led_class, MKDEV(major, 0));
+    int i;
+    for(i = 0; i < LED_NUM; i++)
+    {
+        device_destroy(led_class, MKDEV(major, i));
+    }
     class_destroy(led_class);
     unregister_chrdev(major, "led_drv");
     return 0;

@@ -8,9 +8,33 @@ static volatile unsigned int *GPIO4_GDIR;
 /* GPIO4_DR 0x020AC000 + 0 */
 static volatile unsigned int *GPIO4_DR;
 
+static led_resource led_rsc;
+
 static int board_demo_led_init(int which)
 {
     printk("%s %s %s\n", __FILE__, __FUNCTION__, __LINE__);
+    if(!led_rsc)
+    {
+        led_rsc = get_board_demo_led_resource();
+    }
+    printk("led_res: group = %d, pin = %d\n", GROUP(led_rsc->pin), PIN(led_rsc->pin));
+
+    switch(GROUP(led_rsc->pin))
+    {
+        case 0:
+        {
+            printk("init group 0\n");
+            break;
+        }
+        case 1:
+        {
+            printk("init group 1\n");
+            break;
+        }
+        default:
+            printk("group %d not support\n", GROUP(led_rsc->pin));
+            return -1;
+    }
     return 0;
 }
 
