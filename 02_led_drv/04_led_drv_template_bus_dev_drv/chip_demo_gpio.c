@@ -38,6 +38,7 @@ static int board_demo_led_init(int which)
 static int board_demo_led_ctl(int which, char status)
 {
     printk("%s %s %s\n", __FILE__, __FUNCTION__, __LINE__);
+    printk("led ctl: group = %d, pin = %d, status = %d\n", GROUP(led_rsc->pin), PIN(led_rsc->pin), status);
     return 0;
 }
 
