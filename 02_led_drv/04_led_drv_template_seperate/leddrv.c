@@ -10,7 +10,7 @@
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/compat.h>
-#include "leddrv.h"
+#include "led_opr.h"
 
 #define LED_NUM 2
 
@@ -18,14 +18,21 @@ static int major;
 static struct class *led_class;
 static struct led_opration* p_ledopr;
 
+/* register */
+/* IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3 0x2290014 */
+static volatile unsigned int *IOMUXC_SNVS_SW_MUX_CTL_PAD_SNVS_TAMPER3;
+/* GPIO5_GDIR 0x020AC000 + 0x4 */
+static volatile unsigned int *GPIO5_GDIR;
+/* GPIO5_DR 0x020AC000 + 0 */
+static volatile unsigned int *GPIO5_DR;
 
 struct file_operations led_fops = {
     .owner = THIS_MODULE,
-    .open = led_drv_open,
-    .write = led_drv_write,
+    .open = led_open,
+    .write = led_write,
 };
 
-static int led_drv_open(struct inode *inode, struct file *file)
+static int led_open(struct inode *inode, struct file *file)
 {
     int minor = iminor(inode);
 
@@ -35,7 +42,7 @@ static int led_drv_open(struct inode *inode, struct file *file)
     return 0;
 }
 
-static size_t led_drv_write(struct file *file, const char __user *buf,
+static size_t led_write(struct file *file, const char __user *buf,
 			  size_t len, loff_t *ppos) 
 {
     char status;
@@ -52,7 +59,7 @@ static size_t led_drv_write(struct file *file, const char __user *buf,
     return 0;
 }
 
-static int __init led_drv_init(void)
+static int __init led_init(void)
 {
     int i;
 
