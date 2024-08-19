@@ -18,25 +18,27 @@
 static int major = 0;
 static char kernel_buf[1024];
 
+#define MIN(a,b) (a)>(b)?(b):(a)
+
 /*实现对应的drv函数*/
-static ssize_t (*hello_read) (struct file *file, char __user *buf, size_t size, loff_t *offset){
+static ssize_t hello_read (struct file *file, char __user *buf, size_t size, loff_t *offset){
 	int err;	
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	err = copy_to_user(buf, kernel_buf, MIN(1024, size));
 	return MIN(1024, size);
 }
-static ssize_t (*hello_write) (struct file *file, char __user *buf, size_t size, loff_t *offset){
+static ssize_t hello_write (struct file *file, const char __user *buf, size_t size, loff_t *offset){
 	int err;
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	err = copy_from_user(kernel_buf, buf, MIN(1024, size));
 	return MIN(1024, size);
 }
-static int (*hello_open) (struct inode *node, struct file *file){
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
+static int hello_open (struct inode *node, struct file *file){
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	return 0;
 }
-static int (*hello_release) (struct inode *node, struct file *file){
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
+static int hello_release (struct inode *node, struct file *file){
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	return 0;
 }
 
@@ -56,7 +58,7 @@ static int __init hello_init(void)
 {
 	int err;
 
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	hello_class = class_create(THIS_MODULE, "hello");
 	err = PTR_ERR(hello_class);
 	major = register_chrdev(MISC_MAJOR, "hello", &hello_fops);
@@ -69,8 +71,8 @@ static int __init hello_init(void)
 /*出口函数*/
 static void __exit hello_exit(void)
 {
-	printk("%s %s line %d\n", __FILE__, __FUNCTION__,__LINE);
-	device_destroy(device_create, MKDEV(major, 0));
+	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
+	device_destroy(hello_class, MKDEV(major, 0));
 	class_destroy(hello_class);
 	unregister_chrdev(major, "helllo");
 }

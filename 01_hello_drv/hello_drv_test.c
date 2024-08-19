@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     fd = open("/dev/hello", O_RDWR);
     if(fd == 1)
     {
-        printf("Can not open file /dev/hello\n"):
+        printf("Can not open file /dev/hello\n");
         return -1;
     }
 
