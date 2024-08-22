@@ -1,4 +1,4 @@
-#ifndefine _LED_RESOURCE_H_
+#ifndef _LED_RESOURCE_H_
 #define _LED_RESOURCE_H_
 
 #define GROUP_PIN(g, p) ((g << 16) | p)
