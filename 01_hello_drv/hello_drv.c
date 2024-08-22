@@ -61,8 +61,12 @@ static int __init hello_init(void)
 	printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
 	hello_class = class_create(THIS_MODULE, "hello");
 	err = PTR_ERR(hello_class);
-	major = register_chrdev(MISC_MAJOR, "hello", &hello_fops);
-	
+	if (IS_ERR(hello_class))
+	{
+		printk("%s %s line %d\n", __FILE__, __FUNCTION__, __LINE__);
+		return -1;
+	}
+	major = register_chrdev(0, "hello", &hello_fops);	
 	device_create(hello_class, NULL, MKDEV(major, 0), NULL, "hello");
 	return 0;
 }

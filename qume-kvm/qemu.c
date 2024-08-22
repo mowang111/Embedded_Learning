@@ -1,14 +1,20 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <linux/kvm.h>
 
 int main(){
-    struct kvm_sregssregs;
+    struct kvm_sregs sregs;
     int ret;
     int kvmfd = open("/dev/kvm", O_RDWR);
-    ioctl(kvmfd, KVM_GET_API_VERSION, 0);
+    int version = ioctl(kvmfd, KVM_GET_API_VERSION, 0);
+    if (version != KVM_API_VERSION) {
+   	fprintf(stderr, "KVM API version mismatch: expected %d, got %d\n", KVM_API_VERSION, version);
+    	return 1;
+    }
     int vmfd = ioctl(kvmfd, KVM_CREATE_VM, 0);
     unsigned char *ram = mmap(NULL, 0x1000, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     int kfd = open("test.bin", O_RDONLY);

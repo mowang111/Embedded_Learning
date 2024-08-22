@@ -9,11 +9,11 @@
 KERN_DIR = /home/book/100ask_imx6ull-sdk/Linux-4.9.88
 
 all:
-	make -C $(KERN_DIR) M=`pwd` modules
+	make -C $(KERN_DIR) M=$(PWD) modules
 	$(CROSS_COMPILE)gcc -o hello_drv_test hello_drv_test.c
 
 clean:
-	make -C $(KERN_DIR) M=`pwd` modules clean	
+	make -C $(KERN_DIR) M=$(PWD) modules clean
 	rm -rf modules.order
 	rm -f hello_drv_test
 
